@@ -1,0 +1,19 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: langchain4j-01-demo
+
+#logging:
+#  level:
+#    dev:
+#      langchain4j: debug
+
+
+#langchain4j:
+#  open-ai:
+#    chat-model:
+#      api-key: ${QWEN_API_KEY}
+#      model-name: qwen3.8-max
+#      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
