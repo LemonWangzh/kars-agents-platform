@@ -7,6 +7,7 @@ import reactor.core.publisher.Mono;
 public class BaseTest {
 
     @Test
+    
     public void mo() throws InterruptedException {
         Mono<Integer> just = Mono.just(1);
         just.subscribe(System.out::println);

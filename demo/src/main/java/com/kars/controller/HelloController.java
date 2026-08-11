@@ -1,18 +1,24 @@
 package com.kars.controller;
 
+import com.kars.assistant.AiAssistant;
+import com.kars.assistant.AiCacheAssistant;
 import dev.langchain4j.community.model.dashscope.WanxImageModel;
 import dev.langchain4j.data.image.Image;
 import dev.langchain4j.data.message.ImageContent;
 import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.output.Response;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -30,6 +36,16 @@ public class HelloController {
 
     @Value("classpath:static/images/zycx.png")
     private org.springframework.core.io.Resource resource;
+
+    @Resource
+    private AiAssistant aiAssistant;
+    @Resource
+    private StreamingChatModel streamingChatModel;
+
+    @Resource(name = "chatMessageWindowChatMemory")
+    private AiCacheAssistant aiCacheAssistant;
+
+
 
 
     @PostMapping("/hello")
@@ -64,5 +80,44 @@ public class HelloController {
     }
 
 
+    @GetMapping(value = "/streamChat",produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    private Flux<String> streamChat(@RequestParam(value = "prompt", defaultValue = "你是谁") String prompt){
+        return Flux.create(e-> {
+            streamingChatModel.chat(prompt, new StreamingChatResponseHandler() {
+                @Override
+                public void onPartialResponse(String partialResponse) {
+                    e.next(partialResponse);
+                }
 
+                @Override
+                public void onCompleteResponse(ChatResponse completeResponse) {
+                    e.complete();
+                }
+
+                @Override
+                public void onError(Throwable error) {
+                    e.error(error);
+                }
+            });
+        });
+    }
+
+    @GetMapping(value = "/streamChat2")
+    private Flux<String> streamChat2(@RequestParam(value = "prompt", defaultValue = "你是谁") String prompt){
+        return aiAssistant.chatFlux(prompt);
+    }
+
+
+    @GetMapping(value = "/cacheChat1")
+    private String cacheChat1(@RequestParam(value = "id") String id, @RequestParam(value = "prompt", defaultValue = "你是谁") String prompt){
+        return aiCacheAssistant.chat(id, prompt);
+    }
+
+
+    @GetMapping(value = "/stockChat")
+    private Flux<String> stockChat(@RequestParam(value = "id") String id,
+                             @RequestParam(value = "prompt", defaultValue = "你是谁") String prompt,
+                             @RequestParam("limit") Integer limit){
+        return aiCacheAssistant.stockChat(id, prompt, limit);
+    }
 }

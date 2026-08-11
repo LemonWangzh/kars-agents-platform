@@ -1,16 +1,23 @@
 package com.kars.config;
 
 import com.kars.assistant.AiAssistant;
+import com.kars.assistant.AiCacheAssistant;
 import com.kars.listener.BaseListener;
 import dev.langchain4j.community.model.dashscope.WanxImageModel;
 import dev.langchain4j.community.model.dashscope.WanxImageSize;
 import dev.langchain4j.community.model.dashscope.WanxImageStyle;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.memory.chat.TokenWindowChatMemory;
+import dev.langchain4j.model.TokenCountEstimator;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
 import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
 import dev.langchain4j.service.AiServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +47,7 @@ public class LLMConfig {
     public ChatModel chatModelQwen(){
         return OpenAiChatModel.builder()
                 .apiKey(System.getenv("QWEN_API_KEY"))
-//                .modelName("qwen3.8-max")
-                .modelName("z-image-turbo")
+                .modelName("qwen-long")
                 .logRequests(true)
                 .logResponses(true)
 //                .maxRetries(3)
@@ -87,5 +93,37 @@ public class LLMConfig {
             }
         };
     }
+
+    @Bean
+    public StreamingChatModel streamingChatModel(){
+        return OpenAiStreamingChatModel.builder()
+                .apiKey(System.getenv("QWEN_API_KEY"))
+                .modelName("qwen3.8-max")
+                .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
+                .build();
+    }
+
+    @Bean
+    public AiAssistant aiAssistant(StreamingChatModel streamingChatModel){
+        return AiServices.create(AiAssistant.class, streamingChatModel);
+    }
+
+    @Bean(name = "chatMessageWindowChatMemory")
+    public AiCacheAssistant chatMessageWindowChatMemory(StreamingChatModel streamingChatModel){
+        return AiServices.builder(AiCacheAssistant.class)
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(100))
+                .streamingChatModel(streamingChatModel)
+                .build();
+    }
+
+    @Bean(name = "chatTokenWindowChatMemory")
+    public AiCacheAssistant chatTokenWindowChatMemory(ChatModel chatModel, StreamingChatModel streamingChatModel){
+        TokenCountEstimator tokenCountEstimator = new OpenAiTokenCountEstimator("gpt-4");
+        return AiServices.builder(AiCacheAssistant.class)
+                .chatMemoryProvider(memoryId -> TokenWindowChatMemory.withMaxTokens(1000, tokenCountEstimator))
+                .streamingChatModel(streamingChatModel)
+                .build();
+    }
+
 
 }
