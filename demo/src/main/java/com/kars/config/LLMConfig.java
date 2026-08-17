@@ -2,10 +2,12 @@ package com.kars.config;
 
 import com.kars.assistant.AiAssistant;
 import com.kars.assistant.AiCacheAssistant;
+import com.kars.assistant.AiChatPersistenceAssistance;
 import com.kars.listener.BaseListener;
 import dev.langchain4j.community.model.dashscope.WanxImageModel;
 import dev.langchain4j.community.model.dashscope.WanxImageSize;
 import dev.langchain4j.community.model.dashscope.WanxImageStyle;
+import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.memory.chat.TokenWindowChatMemory;
 import dev.langchain4j.model.TokenCountEstimator;
@@ -25,13 +27,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.time.Duration;
 import java.util.List;
 
 @Configuration
 public class LLMConfig {
 
     private static final Logger log = LoggerFactory.getLogger(LLMConfig.class);
+
 
 
 //    @Bean("deepseek")
@@ -121,6 +123,36 @@ public class LLMConfig {
         TokenCountEstimator tokenCountEstimator = new OpenAiTokenCountEstimator("gpt-4");
         return AiServices.builder(AiCacheAssistant.class)
                 .chatMemoryProvider(memoryId -> TokenWindowChatMemory.withMaxTokens(1000, tokenCountEstimator))
+                .streamingChatModel(streamingChatModel)
+                .build();
+    }
+
+    @Bean(name = "chatRedisMessageWindowChatMemory")
+    public AiChatPersistenceAssistance chatRedisMessageWindowChatMemory(StreamingChatModel streamingChatModel, RedisChatMemoryStore redisChatMemoryStore){
+        ChatMemoryProvider chatMemoryProvider = memoryId ->
+                MessageWindowChatMemory.builder()
+                        .id(memoryId)
+                        .chatMemoryStore(redisChatMemoryStore)
+                        .maxMessages(1000)
+                        .build();
+
+        return AiServices.builder(AiChatPersistenceAssistance.class)
+                .chatMemoryProvider(chatMemoryProvider)
+                .streamingChatModel(streamingChatModel)
+                .build();
+    }
+
+    @Bean(name = "chatMysqlMessageWindowChatMemory")
+    public AiChatPersistenceAssistance chatMysqlMessageWindowChatMemory(StreamingChatModel streamingChatModel, MysqlChatMemoryStore mysqlChatMemoryStore){
+        ChatMemoryProvider chatMemoryProvider = memoryId ->
+                MessageWindowChatMemory.builder()
+                        .id(memoryId)
+                        .chatMemoryStore(mysqlChatMemoryStore)
+                        .maxMessages(1000)
+                        .build();
+
+        return AiServices.builder(AiChatPersistenceAssistance.class)
+                .chatMemoryProvider(chatMemoryProvider)
                 .streamingChatModel(streamingChatModel)
                 .build();
     }

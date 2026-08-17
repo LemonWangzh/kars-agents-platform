@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kars.mapper.ChatMemoryMapper">
+
+    <resultMap id="ChatMemoryRecordMap" type="com.kars.entity.ChatMemoryRecord">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="messages" property="messages"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_date_time" property="createDateTime"/>
+        <result column="update_user" property="updateUser"/>
+        <result column="update_date_time" property="UpdateDateTime"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <select id="selectByUserId" resultMap="ChatMemoryRecordMap">
+        SELECT id, user_id, messages, create_user, create_date_time, update_user, update_date_time, deleted
+        FROM chat_memory
+        WHERE user_id = #{userId} AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chat_memory (user_id, messages, create_user, create_date_time, update_user, update_date_time, deleted)
+        VALUES (#{userId}, #{messages}, #{createUser}, NOW(), #{updateUser}, NOW(), 0)
+    </insert>
+
+    <update id="updateById">
+        UPDATE chat_memory
+        SET messages = #{messages}, update_user = #{updateUser}, update_date_time = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="deleteByUserId">
+        UPDATE chat_memory
+        SET deleted = 1, update_user = #{updateUser}, update_date_time = NOW()
+        WHERE user_id = #{userId} AND deleted = 0
+    </update>
+
+</mapper>

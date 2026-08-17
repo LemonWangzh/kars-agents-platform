@@ -2,8 +2,10 @@ package com.kars.controller;
 
 import com.kars.assistant.AiAssistant;
 import com.kars.assistant.AiCacheAssistant;
+import com.kars.prompt.StockPrompt;
 import dev.langchain4j.community.model.dashscope.WanxImageModel;
 import dev.langchain4j.data.image.Image;
+import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ImageContent;
 import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
@@ -11,10 +13,12 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
+import dev.langchain4j.model.input.Prompt;
+import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.model.output.Response;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +26,14 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Map;
 
 @Slf4j
 @RestController
 public class HelloController {
 
     @Resource
-//    @Qualifier("qwen")
+    @Qualifier("qwen")
     private ChatModel chatModel;
 
     @Resource
@@ -119,5 +124,26 @@ public class HelloController {
                              @RequestParam(value = "prompt", defaultValue = "你是谁") String prompt,
                              @RequestParam("limit") Integer limit){
         return aiCacheAssistant.stockChat(id, prompt, limit);
+    }
+
+    @GetMapping(value = "/stockChat2")
+    private Flux<String> stockChat2(@RequestParam(value = "id") String id,
+                                   @RequestParam(value = "stock", defaultValue = "北京君正") String stock,
+                                   @RequestParam("num") Integer num){
+        StockPrompt stockPrompt = new StockPrompt();
+        stockPrompt.setName(stock);
+        stockPrompt.setNum(num);
+        return aiCacheAssistant.stockChat(id, stockPrompt);
+    }
+
+
+    @GetMapping(value = "/stockChat3")
+    private String stockChat3(@RequestParam(value = "id") String id,
+                                    @RequestParam(value = "stock", defaultValue = "北京君正") String stock,
+                                    @RequestParam("num") Integer num){
+        PromptTemplate template = PromptTemplate.from("你是一个{{it}}助手，{{question}}");
+        Prompt apply = template.apply(Map.of("it", "股票咨询", "question", "帮我看下北京君正的"));
+        UserMessage userMessage = apply.toUserMessage();
+        return chatModel.chat(userMessage).aiMessage().text();
     }
 }
