@@ -74,6 +74,11 @@
             <artifactId>okhttp</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-qdrant</artifactId>
+        </dependency>
+
 
 
 <!--        <dependency>-->

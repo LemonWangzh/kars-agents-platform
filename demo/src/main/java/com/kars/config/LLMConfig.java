@@ -10,6 +10,7 @@ import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.community.model.dashscope.WanxImageModel;
 import dev.langchain4j.community.model.dashscope.WanxImageSize;
 import dev.langchain4j.community.model.dashscope.WanxImageStyle;
+import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.memory.chat.TokenWindowChatMemory;
@@ -21,11 +22,17 @@ import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
 import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.tool.ToolExecutor;
+import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
+import io.qdrant.client.QdrantClient;
+import io.qdrant.client.QdrantGrpcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -211,6 +218,29 @@ public class LLMConfig {
                 .chatMemoryProvider(chatMemoryProvider)
                 .streamingChatModel(streamingChatModel)
                 .tools(new StockHandler()).build();
+    }
+
+
+    @Bean
+    public EmbeddingModel embeddingModel(){
+        return OpenAiEmbeddingModel.builder()
+                .apiKey(System.getenv("QWEN_API_KEY"))
+                .modelName("qwen3.7-text-embedding")
+                .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
+                .build();
+    }
+
+    @Bean
+    public QdrantClient qdrantClient(){
+        return new QdrantClient(QdrantGrpcClient.newBuilder("localhost", 6334, false).build());
+    }
+
+    @Bean
+    public EmbeddingStore<TextSegment> embeddingStore(QdrantClient client){
+        return QdrantEmbeddingStore.builder()
+                .client(client)
+                .collectionName("qdrant-test")
+                .build();
     }
 
 

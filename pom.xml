@@ -40,6 +40,7 @@
 
         <mybatis-spring-boot-starter.version>3.0.5</mybatis-spring-boot-starter.version>
         <okhttp.version>4.12.0</okhttp.version>
+        <langchain4j-qdrant.version>1.19.0-beta29</langchain4j-qdrant.version>
     </properties>
 
 
@@ -113,6 +114,11 @@
                 <version>${okhttp.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-qdrant</artifactId>
+                <version>${langchain4j-qdrant.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
