@@ -3,7 +3,10 @@ package com.kars.config;
 import com.kars.assistant.AiAssistant;
 import com.kars.assistant.AiCacheAssistant;
 import com.kars.assistant.AiChatPersistenceAssistance;
+import com.kars.assistant.AiStockToolAssistant;
 import com.kars.listener.BaseListener;
+import com.kars.tool.StockHandler;
+import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.community.model.dashscope.WanxImageModel;
 import dev.langchain4j.community.model.dashscope.WanxImageSize;
 import dev.langchain4j.community.model.dashscope.WanxImageStyle;
@@ -17,10 +20,12 @@ import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
 import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
+import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
 import dev.langchain4j.service.AiServices;
+import dev.langchain4j.service.tool.ToolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,6 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 public class LLMConfig {
@@ -156,6 +162,57 @@ public class LLMConfig {
                 .streamingChatModel(streamingChatModel)
                 .build();
     }
+
+
+    /**
+     * 配置说明参见 {@link <a href="https://docs.langchain4j.info/tutorials/tools"></a>}
+     */
+    @Bean
+    public AiStockToolAssistant tool(StreamingChatModel streamingChatModel, MysqlChatMemoryStore mysqlChatMemoryStore){
+        ChatMemoryProvider chatMemoryProvider = memoryId ->
+                MessageWindowChatMemory.builder()
+                        .id(memoryId)
+                        .chatMemoryStore(mysqlChatMemoryStore)
+                        .maxMessages(1000)
+                        .build();
+
+        ToolSpecification toolSpecification = ToolSpecification.builder()
+                .name("股票咨询助手")
+                .description("根据用户提问的股票信息，分析股票")
+                .parameters(JsonObjectSchema.builder()
+                        .addStringProperty("stockName", "股票名称")
+                        .addStringProperty("stockNum", "股票编号")
+                        .addNumberProperty("price", "股票价格")
+                        .build())
+                .build();
+
+        ToolExecutor toolExecutor = (toolExecutionRequest, memoryId) -> {
+            log.info("toolExecutionRequest id = {}", toolExecutionRequest.id());
+            log.info("toolExecutionRequest name={}", toolExecutionRequest.name());
+            log.info("toolExecutionRequest arguments={}", toolExecutionRequest.arguments());
+            return "股票分析成功!";
+        };
+        return AiServices.builder(AiStockToolAssistant.class)
+                .chatMemoryProvider(chatMemoryProvider)
+                .streamingChatModel(streamingChatModel)
+                .tools(Map.of(toolSpecification, toolExecutor))
+                .build();
+    }
+
+    @Bean("aiStockToolAssistantPlus")
+    public AiStockToolAssistant aiStockToolAssistant(StreamingChatModel streamingChatModel, MysqlChatMemoryStore mysqlChatMemoryStore){
+        ChatMemoryProvider chatMemoryProvider = memoryId -> MessageWindowChatMemory.builder()
+                .id(memoryId)
+                .chatMemoryStore(mysqlChatMemoryStore)
+                .maxMessages(1000)
+                .build();
+
+        return AiServices.builder(AiStockToolAssistant.class)
+                .chatMemoryProvider(chatMemoryProvider)
+                .streamingChatModel(streamingChatModel)
+                .tools(new StockHandler()).build();
+    }
+
 
 
 }
