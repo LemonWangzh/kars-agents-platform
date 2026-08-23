@@ -6,7 +6,6 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.filter.Filter;
 import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.grpc.Collections;
@@ -27,7 +26,7 @@ public class EmbeddingController {
     @Resource
     private QdrantClient qdrantClient;
 
-    @Resource
+    @Resource(name = "quadrantEmbeddingStore")
     private EmbeddingStore<TextSegment> embeddingStore;
 
     private final String sourceData1 = """

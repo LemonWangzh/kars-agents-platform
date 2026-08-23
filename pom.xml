@@ -41,6 +41,9 @@
         <mybatis-spring-boot-starter.version>3.0.5</mybatis-spring-boot-starter.version>
         <okhttp.version>4.12.0</okhttp.version>
         <langchain4j-qdrant.version>1.19.0-beta29</langchain4j-qdrant.version>
+        <langchain4j-easy-rag.version>1.18.1-beta28</langchain4j-easy-rag.version>
+        <!-- macOS (including Apple Silicon) tokenizer native library compatibility -->
+        <djl-tokenizers.version>0.28.0</djl-tokenizers.version>
     </properties>
 
 
@@ -118,6 +121,19 @@
                 <groupId>dev.langchain4j</groupId>
                 <artifactId>langchain4j-qdrant</artifactId>
                 <version>${langchain4j-qdrant.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-easy-rag</artifactId>
+                <version>${langchain4j-easy-rag.version}</version>
+            </dependency>
+
+            <!-- Override the transitive DJL tokenizer version used by Easy RAG. -->
+            <dependency>
+                <groupId>ai.djl.huggingface</groupId>
+                <artifactId>tokenizers</artifactId>
+                <version>${djl-tokenizers.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

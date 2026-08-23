@@ -27,9 +27,11 @@ import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
+import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.tool.ToolExecutor;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
@@ -235,14 +237,32 @@ public class LLMConfig {
         return new QdrantClient(QdrantGrpcClient.newBuilder("localhost", 6334, false).build());
     }
 
-    @Bean
-    public EmbeddingStore<TextSegment> embeddingStore(QdrantClient client){
+    @Bean(name = "quadrantEmbeddingStore")
+    public EmbeddingStore<TextSegment> quadrantEmbeddingStore(QdrantClient client){
         return QdrantEmbeddingStore.builder()
                 .client(client)
                 .collectionName("qdrant-test")
                 .build();
     }
 
+    @Bean(name = "inMemoryEmbeddingStore")
+    public EmbeddingStore<TextSegment> inMemoryEmbeddingStore(){
+        return new InMemoryEmbeddingStore<>();
+    }
 
+
+     @Bean(name = "rpgAiAssistant")
+     public AiAssistant aiRpgAssistant(StreamingChatModel streamingChatModel,
+                                       @Qualifier("quadrantEmbeddingStore") EmbeddingStore<TextSegment> embeddingStore,
+                                       EmbeddingModel embeddingModel){
+         return AiServices.builder(AiAssistant.class)
+                 .streamingChatModel(streamingChatModel)
+                 .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
+                 .contentRetriever(EmbeddingStoreContentRetriever.builder()
+                         .embeddingStore(embeddingStore)
+                         .embeddingModel(embeddingModel)
+                         .build())
+                 .build();
+     }
 
 }
