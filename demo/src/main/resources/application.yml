@@ -84,10 +84,10 @@ mybatis:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 
-#logging:
-#  level:
-#    dev:
-#      langchain4j: debug
+logging:
+  level:
+    MCP: DEBUG
+    dev.langchain4j.mcp.client.transport.stdio: DEBUG
 
 
 #langchain4j:
