@@ -40,6 +40,8 @@ cd demo && mvn spring-boot:run
 
 ## 核心模块
 
+独立的 [PDF 公共组件](pdf-common/README.md) 支持 JDK 8、中文字体加载、自动分页、基础表格、图片和页眉页脚扩展，可直接复用于公司项目。
+
 | 包路径 | 说明 |
 |--------|------|
 | `com.kars.config` | 配置类（LLM、Redis、Druid、MyBatis、ChatMemoryStore） |

@@ -8,6 +8,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>kars-agents-platform</name>
     <modules>
+        <module>pdf-common</module>
         <module>demo</module>
     </modules>
     <packaging>pom</packaging>
